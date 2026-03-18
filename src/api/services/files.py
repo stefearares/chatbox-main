@@ -223,6 +223,37 @@ def search_files_semantic(
     return unique[offset: offset + limit]
 
 
+def search_chunks(
+    db: Session, user_id: int, query: str, limit: int = 10
+):
+    if not query.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Query cannot be empty."
+        )
+
+    try:
+        query_vec = embed([query])[0]
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Embedding service unavailable.",
+        )
+
+    results = (
+        db.query(ChunkRecord, FileRecord.original_name)
+        .join(FileRecord, FileRecord.id == ChunkRecord.file_id)
+        .filter(FileRecord.user_id == user_id)
+        .order_by(sa_cast(ChunkRecord.embedding.op("<=>")(query_vec), Float))
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {"text": chunk.text, "filename": filename}
+        for chunk, filename in results
+    ]
+
+
 def delete_file(db: Session, file_id: int, user_id: int) -> None:
     record = get_file(db, file_id, user_id)
 

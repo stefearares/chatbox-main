@@ -46,6 +46,19 @@ def list_files(
     return [serialize_file(r) for r in records]
 
 
+@router.get("/search/chunks")
+def search_chunks(
+    q: str,
+    limit: int = 10,
+    current_user: UserRecord = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    results = files_service.search_chunks(
+        db=db, user_id=current_user.id, query=q, limit=limit
+    )
+    return {"results": results}
+
+
 @router.get("/search/fts")
 def search_files_fts(
     q: str,

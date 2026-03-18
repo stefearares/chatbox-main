@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     pg_database_url: Optional[str] = None
     pg_vector_database_url: Optional[str] =None
 
+    api_base_url: str = "http://localhost:8000"
+
     voyage_key: Optional[str] = None
     groq_key : Optional[str] = None
 
