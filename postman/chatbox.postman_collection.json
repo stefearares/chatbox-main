@@ -1,0 +1,336 @@
+{
+  "info": {
+    "_postman_id": "4bb59754-5ba8-4712-94e7-91ae8007f248",
+    "name": "chatbox",
+    "description": "# Collection of API endpoints and methods meant for testing functionality of **chatbox**:\n- **file uploading**\n- **authentification**\n- **core**",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53234033",
+    "_collection_link": "https://go.postman.co/collection/53234033-4bb59754-5ba8-4712-94e7-91ae8007f248?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "files",
+      "item": [
+        {
+          "name": "upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "5ce7da15-32b4-439a-a2c3-8392b9dd9941",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://0.0.0.0:8000/files",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "files"
+              ]
+            },
+            "description": "Route meant for adding files to a user.\n\nUser must be **authenticated**, otherwise upload will fail.\n\nBody needs:\n\n- file to upload"
+          },
+          "response": []
+        },
+        {
+          "name": "list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/files",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "files"
+              ]
+            },
+            "description": "Returns the list of files added by an authentificated user."
+          },
+          "response": []
+        },
+        {
+          "name": "delete file",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/files/:file_id",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "files",
+                ":file_id"
+              ],
+              "variable": [
+                {
+                  "key": "file_id",
+                  "value": "",
+                  "description": "File Id to delete"
+                }
+              ]
+            },
+            "description": "Endpoint to delete a specific user's file based on authentifiaction of the user."
+          },
+          "response": []
+        },
+        {
+          "name": "view content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/files/:file_id",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "files",
+                ":file_id"
+              ],
+              "variable": [
+                {
+                  "key": "file_id",
+                  "value": "",
+                  "description": "File Id to view the content"
+                }
+              ]
+            },
+            "description": "Endpoint to view the content of a file based on a user auth."
+          },
+          "response": []
+        },
+        {
+          "name": "search-by-content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/files/search?q={{value}}&limit={{limit}}&offset={{offset}}",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{value}}",
+                  "description": "Search term"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "{{offset}}",
+                  "description": "Offset of page"
+                }
+              ]
+            },
+            "description": "Endpoint for searching files based on their content."
+          },
+          "response": []
+        }
+      ],
+      "description": "# Set of endpoints for file operations."
+    },
+    {
+      "name": "user-ops",
+      "item": [
+        {
+          "name": "signup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\" : \"exampl21e@gmail.com\",\n    \"username\" : \"example\",\n    \"phone\" : \"0700000\",\n    \"avatar_url\" : \"some url\",\n    \"password\" : \"password\"  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://0.0.0.0:8000/auth/signup",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "# Endpoint for sign up\n\nFields:\n\n- **email**: must be **unique**, not **optional**\n    \n- **name**: **optional**\n    \n- **phone**:**optional**\n    \n- **avatar_url**: **optional**\n    \n- **password**: not **optional**\n\nOn **success** returns **JWT bearer token**.\n\nOn **fail** returns corresponding error message."
+          },
+          "response": []
+        },
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\" : \"example@gmail.com\",\n    \"password\" : \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://0.0.0.0:8000/auth/login",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "# Endpoint for sign up\n\nFields:\n\n- **email** - must be an already existing email\n- **password** - must match registered email password\n\nOn **success** returns **JWT bearer token**.\nOn **failure** returns specific errors."
+          },
+          "response": []
+        }
+      ],
+      "description": "# Set of user auth methods: login, signup, delete."
+    },
+    {
+      "name": "core",
+      "item": [
+        {
+          "name": "root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                ""
+              ]
+            },
+            "description": "This is the root document meant for testing status of user.\n\nOn **Successful** user authorization it returns:\n\n- Response 201\n    \n- user.email\n    \n\nOn **Unsuccessful** user authorization it returns the specific error response."
+          },
+          "response": []
+        },
+        {
+          "name": "healthz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://0.0.0.0:8000/healthz",
+              "protocol": "http",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8000",
+              "path": [
+                "healthz"
+              ]
+            },
+            "description": "This route **/healthz** is meant for checking the status of our API in a **Contarization** context."
+          },
+          "response": []
+        }
+      ],
+      "description": "# Set of core operations meant for checking health and user auth status."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzczODE3OTgzfQ.VrmY4ef37mLrCrqKPS3tVKG0WZm42KpfrHOgp6fZlNA",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
