@@ -108,8 +108,17 @@ BANNER = """
 """
 
 
+def check_server():
+    try:
+        requests.get(f"{API_BASE}/healthz", timeout=3)
+    except requests.ConnectionError:
+        print(f"  server not reachable at {API_BASE}. Is it running?")
+        sys.exit(1)
+
+
 def main():
     print(BANNER)
+    check_server()
     token, name = authenticate()
     signal.signal(signal.SIGTERM, lambda *_: goodbye(name))
     print(f"\nWelcome, {name}!\n")
