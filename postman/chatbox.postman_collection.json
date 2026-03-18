@@ -1,16 +1,113 @@
 {
   "info": {
-    "_postman_id": "4bb59754-5ba8-4712-94e7-91ae8007f248",
+    "_postman_id": "faee1fad-fa27-47c3-8d71-ce818ed98c09",
     "name": "chatbox",
     "description": "# Collection of API endpoints and methods meant for testing functionality of **chatbox**:\n- **file uploading**\n- **authentification**\n- **core**",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "53234033",
-    "_collection_link": "https://go.postman.co/collection/53234033-4bb59754-5ba8-4712-94e7-91ae8007f248?source=collection_link"
+    "_exporter_id": "53248224",
+    "_collection_link": "https://go.postman.co/collection/53248224-faee1fad-fa27-47c3-8d71-ce818ed98c09?source=collection_link"
   },
   "item": [
     {
       "name": "files",
       "item": [
+        {
+          "name": "searches",
+          "item": [
+            {
+              "name": "search-hybrid",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://0.0.0.0:8000/files/search?q={{value}}",
+                  "protocol": "http",
+                  "host": [
+                    "0",
+                    "0",
+                    "0",
+                    "0"
+                  ],
+                  "port": "8000",
+                  "path": [
+                    "files",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "{{value}}"
+                    }
+                  ]
+                },
+                "description": "Endpoint for searching files based on their content , creating a hybrid search powered by RRF algorithm to rank them both semantically and exactly"
+              },
+              "response": []
+            },
+            {
+              "name": "search-exact",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://0.0.0.0:8000/files/search/exact?q={{value}}",
+                  "protocol": "http",
+                  "host": [
+                    "0",
+                    "0",
+                    "0",
+                    "0"
+                  ],
+                  "port": "8000",
+                  "path": [
+                    "files",
+                    "search",
+                    "exact"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "{{value}}"
+                    }
+                  ]
+                },
+                "description": "Endpoint for exact text searching."
+              },
+              "response": []
+            },
+            {
+              "name": "search-semantic",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://0.0.0.0:8000/files/search/semantic?q={{value}}",
+                  "protocol": "http",
+                  "host": [
+                    "0",
+                    "0",
+                    "0",
+                    "0"
+                  ],
+                  "port": "8000",
+                  "path": [
+                    "files",
+                    "search",
+                    "semantic"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "{{value}}"
+                    }
+                  ]
+                },
+                "description": "Endpoint for searching content semantically using pgvector."
+              },
+              "response": []
+            }
+          ]
+        },
         {
           "name": "upload",
           "request": {
@@ -23,7 +120,7 @@
                   "key": "file",
                   "type": "file",
                   "uuid": "5ce7da15-32b4-439a-a2c3-8392b9dd9941",
-                  "value": null
+                  "src": "/home/rares/Desktop/chatbox-main/TEST.md"
                 }
               ]
             },
@@ -129,47 +226,6 @@
             "description": "Endpoint to view the content of a file based on a user auth."
           },
           "response": []
-        },
-        {
-          "name": "search-by-content",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://0.0.0.0:8000/files/search?q={{value}}&limit={{limit}}&offset={{offset}}",
-              "protocol": "http",
-              "host": [
-                "0",
-                "0",
-                "0",
-                "0"
-              ],
-              "port": "8000",
-              "path": [
-                "files",
-                "search"
-              ],
-              "query": [
-                {
-                  "key": "q",
-                  "value": "{{value}}",
-                  "description": "Search term"
-                },
-                {
-                  "key": "limit",
-                  "value": "{{limit}}",
-                  "description": "Items per page"
-                },
-                {
-                  "key": "offset",
-                  "value": "{{offset}}",
-                  "description": "Offset of page"
-                }
-              ]
-            },
-            "description": "Endpoint for searching files based on their content."
-          },
-          "response": []
         }
       ],
       "description": "# Set of endpoints for file operations."
@@ -184,7 +240,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\" : \"exampl21e@gmail.com\",\n    \"username\" : \"example\",\n    \"phone\" : \"0700000\",\n    \"avatar_url\" : \"some url\",\n    \"password\" : \"password\"  \n}",
+              "raw": "{\n    \"email\" : \"example@gmail.com\",\n    \"username\" : \"example\",\n    \"phone\" : \"0700000\",\n    \"avatar_url\" : \"some url\",\n    \"password\" : \"password\"  \n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -304,7 +360,7 @@
     "bearer": [
       {
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzczODE3OTgzfQ.VrmY4ef37mLrCrqKPS3tVKG0WZm42KpfrHOgp6fZlNA",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzczOTM1NDU4fQ.S0kfRnIsR7llecmc3wTReEOKdFXDFpJwWZrB8pKXv9g",
         "type": "string"
       }
     ]

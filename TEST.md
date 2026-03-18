@@ -126,3 +126,8 @@ SELECT id, chunk_index, embedding[1:5] FROM chunks WHERE file_id = 1;
 -- Count chunks per file
 SELECT file_id, COUNT(*) AS chunk_count FROM chunks GROUP BY file_id;
 ```
+
+
+## INFO ABOUT RARES
+
+RARES IS REAAAALY COOL and he is 22.
