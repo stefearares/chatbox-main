@@ -36,7 +36,7 @@ def login_user(db: Session, email: str, password: str) -> UserRecord:
     if (
         not user
         or not user.password_hash
-        or not security.verify_password(password, user.password_hash)
+        or not security.verify_password(user.password_hash, password)
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

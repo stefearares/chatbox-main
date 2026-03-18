@@ -6,9 +6,12 @@ from db.database import Base, engine
 
 @asynccontextmanager
 async def lifespan(app):
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
 
     Base.metadata.create_all(bind=engine)
-    print("-> DB created/verified succesfully.")
+    print("-> DB created/verified successfully.")
 
     try:
         with engine.connect() as conn:
@@ -16,7 +19,7 @@ async def lifespan(app):
             result.fetchone()
             print("-> DB connection successful.")
     except Exception as e:
-        print("-> DB connection failed.")
+        print("-> DB connection failed. Exception:", e)
 
     yield
 

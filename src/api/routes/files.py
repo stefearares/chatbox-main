@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from db.models import UserRecord
 from utils.get_user import get_current_user
+from utils.serializers import paginated_response, serialize_file
 from api.services import files as files_service
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -33,13 +34,7 @@ async def upload_file(
         content_type=file.content_type,
     )
 
-    return {
-        "id": record.id,
-        "filename": record.original_name,
-        "content_type": record.content_type,
-        "size": record.size,
-        "path": record.path,
-    }
+    return {**serialize_file(record), "path": record.path}
 
 
 @router.get("")
@@ -48,16 +43,45 @@ def list_files(
     db: Session = Depends(get_db),
 ):
     records = files_service.list_files(db, user_id=current_user.id)
-    return [
-        {
-            "id": r.id,
-            "filename": r.original_name,
-            "content_type": r.content_type,
-            "size": r.size,
-            "created_at": r.created_at,
-        }
-        for r in records
-    ]
+    return [serialize_file(r) for r in records]
+
+
+@router.get("/search/fts")
+def search_files_fts(
+    q: str,
+    limit: int = 10,
+    offset: int = 0,
+    current_user: UserRecord = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    results = files_service.search_files_fts(
+        db=db, user_id=current_user.id, query=q, limit=limit, offset=offset
+    )
+
+    return paginated_response(
+        results=[{**serialize_file(file), "rank": round(rank, 2)} for file, rank in results],
+        offset=offset,
+        limit=limit,
+    )
+
+
+@router.get("/search/semantic")
+def search_files_semantic(
+    q: str,
+    limit: int = 10,
+    offset: int = 0,
+    current_user: UserRecord = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    results = files_service.search_files_semantic(
+        db=db, user_id=current_user.id, query=q, limit=limit, offset=offset
+    )
+
+    return paginated_response(
+        results=[{**serialize_file(file), "distance": distance} for file, distance in results],
+        offset=offset,
+        limit=limit,
+    )
 
 
 @router.get("/search")
@@ -69,28 +93,14 @@ def search_files(
     db: Session = Depends(get_db),
 ):
     results = files_service.search_files(
-        db=db,
-        user_id=current_user.id,
-        query=q,
-        limit=limit,
-        offset=offset,
+        db=db, user_id=current_user.id, query=q, limit=limit, offset=offset
     )
 
-    return {
-        "offset": offset,
-        "limit": limit,
-        "results": [
-            {
-                "id": file.id,
-                "filename": file.original_name,
-                "content_type": file.content_type,
-                "size": file.size,
-                "created_at": file.created_at,
-                "rank": round(rank, 2),
-            }
-            for file, rank in results
-        ],
-    }
+    return paginated_response(
+        results=[{**serialize_file(file), "rank": round(rank, 2)} for file, rank in results],
+        offset=offset,
+        limit=limit,
+    )
 
 
 @router.get("/{file_id}")
@@ -100,14 +110,7 @@ def get_file(
     db: Session = Depends(get_db),
 ):
     record = files_service.get_file(db, file_id=file_id, user_id=current_user.id)
-
-    return {
-        "id": record.id,
-        "filename": record.original_name,
-        "content_type": record.content_type,
-        "size": record.size,
-        "created_at": record.created_at,
-    }
+    return serialize_file(record)
 
 
 @router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)

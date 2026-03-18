@@ -15,5 +15,7 @@ dependencies = [
     "uvicorn>=0.39.0",
     "python-multipart>=0.0.20",
     "psycopg2-binary>=2.9.11",
+    "pgvector>=0.3.6",
     "voyageai>=0.3.7",
+    "groq>=1.0.0",
 ]

@@ -17,7 +17,7 @@ def create_sql_light_engine(path: str | None = None):
 
 def create_postgres_engine(connection_string: str | None = None):
     if connection_string is None:
-        connection_string = settings.pg_database_url
+        connection_string = settings.pg_vector_database_url
 
     if not connection_string:
         raise ValueError("PG_DATABASE_URL environment variable is not set.")
