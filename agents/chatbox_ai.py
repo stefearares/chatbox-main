@@ -52,7 +52,43 @@ def retrieve_chunks(query: str, token: str, chunks_per_file: int = CHUNKS_PER_FI
     return res.json().get("results", [])
 
 
+def can_answer_from_history(query: str, history: list) -> bool:
+    if not history:
+        return False
+
+    history_text = "\n".join(
+        f"{m['role']}: {m['content'][:300]}" for m in history[-6:]
+    )
+
+    response = groq_client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Given the conversation history, can the user's new question be fully "
+                    "answered from existing context? Reply with only 'yes' or 'no'."
+                ),
+            },
+            {"role": "user", "content": f"History:\n{history_text}\n\nNew question: {query}"},
+        ],
+        max_tokens=5,
+    )
+
+    return response.choices[0].message.content.strip().lower().startswith("yes")
+
+
 def ask(query: str, token: str, history: list) -> str:
+    if can_answer_from_history(query, history):
+        history.append({"role": "user", "content": query})
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[SYSTEM_PROMPT] + history,
+        )
+        answer = response.choices[0].message.content
+        history.append({"role": "assistant", "content": answer})
+        return answer
+
     search_query = rewrite_query(query)
     chunks = retrieve_chunks(search_query, token)
 
