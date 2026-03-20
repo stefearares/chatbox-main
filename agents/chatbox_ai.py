@@ -1,4 +1,5 @@
 import getpass
+import json
 import signal
 import sys
 
@@ -11,7 +12,7 @@ API_BASE = settings.api_base_url
 
 groq_client = Groq(api_key=settings.groq_key)
 
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 TOP_K = 5
 CHUNKS_PER_FILE = 2
 CONTEXT_THRESHOLD = 10  # max exchanges before auto-reset
@@ -19,10 +20,190 @@ CONTEXT_THRESHOLD = 10  # max exchanges before auto-reset
 SYSTEM_PROMPT = {
     "role": "system",
     "content": (
-        "You are a helpful personal assistant. Answer the user's question using only "
-        "the provided context. If the answer is not in the context, say so."
+        "You are a helpful personal assistant for a document management system. "
+        "You have tools to list, search, and inspect the user's uploaded files — use them when relevant. "
+        "When answering questions about file contents, rely on the provided context. "
+        "If the answer is not available, say so."
     ),
 }
+
+
+def list_user_files(token: str) -> str:
+    try:
+        res = requests.get(
+            f"{API_BASE}/files",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        res.raise_for_status()
+        files = res.json()
+        if not files:
+            return "No files uploaded yet."
+        return "\n".join(f"- {f['original_name']} (id: {f['id']})" for f in files)
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def search_files(query: str, token: str) -> str:
+    try:
+        res = requests.get(
+            f"{API_BASE}/files/search",
+            params={"q": query},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        res.raise_for_status()
+        results = res.json().get("results", [])
+        if not results:
+            return "No results found."
+        return "\n".join(f"- {r['filename']}: {r.get('snippet', '')[:200]}" for r in results)
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def get_file_content(file_id: str, token: str) -> str:
+    try:
+        res = requests.get(
+            f"{API_BASE}/files/{file_id}/content",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        res.raise_for_status()
+        return res.text
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def get_file_info(file_id: str, token: str) -> str:
+    try:
+        res = requests.get(
+            f"{API_BASE}/files/{file_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        res.raise_for_status()
+        f = res.json()
+        size_kb = round(f.get("size", 0) / 1024, 2)
+        return f"Name: {f['original_name']}\nSize: {size_kb} KB\nUploaded: {f.get('created_at', 'unknown')}"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def get_file_stats(token: str) -> str:
+    try:
+        res = requests.get(
+            f"{API_BASE}/files",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        res.raise_for_status()
+        files = res.json()
+        total = len(files)
+        total_kb = round(sum(f.get("size", 0) for f in files) / 1024, 2)
+        return f"Total files: {total}\nTotal size: {total_kb} KB"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+TOOL_SCHEMAS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "list_user_files",
+            "description": "List all files the user has uploaded, with their IDs",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_files",
+            "description": "Search across uploaded file contents using hybrid search, returns file names and matching snippets",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The search query"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_content",
+            "description": "Get the full text content of a specific file by its ID",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_id": {"type": "string", "description": "The file's ID"}
+                },
+                "required": ["file_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_info",
+            "description": "Get metadata for a specific file: name, size, and upload date",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_id": {"type": "string", "description": "The file's ID"}
+                },
+                "required": ["file_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_stats",
+            "description": "Get aggregate storage stats: total number of files and combined size",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+]
+
+
+def execute_tool_call(tool_call, token: str) -> str:
+    name = tool_call.function.name
+    args = json.loads(tool_call.function.arguments)
+
+    if name == "list_user_files":
+        return list_user_files(token)
+    if name == "search_files":
+        return search_files(token=token, **args)
+    if name == "get_file_content":
+        return get_file_content(token=token, **args)
+    if name == "get_file_info":
+        return get_file_info(token=token, **args)
+    if name == "get_file_stats":
+        return get_file_stats(token)
+    return f"Unknown tool: {name}"
+
+
+def run_with_tools(messages: list, token: str) -> str:
+    messages = list(messages)  
+
+    while True:
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            tools=TOOL_SCHEMAS,
+            tool_choice="auto",
+        )
+        message = response.choices[0].message
+
+        if not message.tool_calls:
+            return message.content or ""
+
+        messages.append(message)
+
+        for tool_call in message.tool_calls:
+            result = execute_tool_call(tool_call, token)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "name": tool_call.function.name,
+                "content": result,
+            })
 
 
 def rewrite_query(query: str) -> str:
@@ -81,30 +262,21 @@ def can_answer_from_history(query: str, history: list) -> bool:
 def ask(query: str, token: str, history: list) -> str:
     if can_answer_from_history(query, history):
         history.append({"role": "user", "content": query})
-        response = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[SYSTEM_PROMPT] + history,
-        )
-        answer = response.choices[0].message.content
+        answer = run_with_tools([SYSTEM_PROMPT] + history, token)
         history.append({"role": "assistant", "content": answer})
         return answer
 
     search_query = rewrite_query(query)
     chunks = retrieve_chunks(search_query, token)
 
-    if not chunks:
-        return "No relevant documents found."
+    if chunks:
+        context = "\n\n".join(f"[{c['filename']}] {c['text']}" for c in chunks)
+        user_message = {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
+    else:
+        user_message = {"role": "user", "content": query}
 
-    context = "\n\n".join(f"[{c['filename']}] {c['text']}" for c in chunks)
-
-    history.append({"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"})
-
-    response = groq_client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[SYSTEM_PROMPT] + history,
-    )
-
-    answer = response.choices[0].message.content
+    history.append(user_message)
+    answer = run_with_tools([SYSTEM_PROMPT] + history, token)
     history.append({"role": "assistant", "content": answer})
 
     return answer
